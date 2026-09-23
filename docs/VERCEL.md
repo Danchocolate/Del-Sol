@@ -31,6 +31,8 @@ Optional `STORAGE_*` variables enable image uploads; optional `SENTRY_DSN` enabl
 
 Resend's testing sender can be useful for a presentation, but it cannot be treated as guest email delivery for a real hotel. Verify a sending domain and confirm delivery to external addresses before accepting real reservations. The website can use the Vercel URL even when the email sender uses a different verified domain.
 
+If the site reports an API error, open `/api/ping` on the production URL first. It returns `{"status":"ok"}` once the API starts and does not query PostgreSQL. Then open `/api/health`, which makes a database query. If ping works and health fails, check the Supabase connection URL and Vercel runtime logs. If ping fails too, check startup errors and confirm the latest commit and environment variables were included in the deployed version.
+
 ## Schedule retries and hold expiry
 
 Booking and access requests attempt queued email delivery as soon as their database transaction commits. The outbox retains failed attempts. The API exposes `POST /api/internal/jobs`, protected by `JOBS_SECRET`, to retry email, expire holds, and clean up expired grants. Unlike Vercel Hobby Cron, [Supabase Cron](https://supabase.com/docs/guides/cron) can call it every minute. This invokes a Function briefly each time; there is no continuously running worker. It still consumes Vercel Function and Supabase usage, so monitor plan limits. A delivery time under one minute is a target, not a guarantee when providers fail or queues grow.

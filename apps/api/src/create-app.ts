@@ -177,6 +177,7 @@ export async function buildApp() {
       return reply.send(await response.text());
     },
   });
+  app.get('/api/ping', async () => ({ status: 'ok' }));
   app.get('/api/health', async () => {
     await db.$queryRaw`SELECT 1`;
     return { status: 'ok' };
