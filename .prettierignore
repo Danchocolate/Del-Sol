@@ -1,0 +1,9 @@
+node_modules
+dist
+.local
+.npm-cache
+package-lock.json
+apps/api/src/generated
+*.png
+*.jpg
+*.webp

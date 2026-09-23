@@ -1,0 +1,29 @@
+{
+  "name": "@hotel/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
+    "worker": "tsx watch --env-file=../../.env src/worker.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1138.0",
+    "@fastify/cookie": "11.1.2",
+    "@fastify/cors": "11.3.0",
+    "@fastify/helmet": "13.1.1",
+    "@fastify/multipart": "10.1.2",
+    "@fastify/rate-limit": "11.2.0",
+    "@hotel/shared": "1.0.0",
+    "@prisma/client": "6.19.3",
+    "@sentry/node": "10.75.2",
+    "better-auth": "1.7.5",
+    "date-fns-tz": "3.2.0",
+    "fastify": "5.12.5",
+    "sharp": "0.35.4",
+    "zod": "4.6.5"
+  }
+}

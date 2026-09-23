@@ -1,0 +1,7 @@
+# Visual system and asset provenance
+
+Public reference: public-concept.png. Admin reference: admin-concept.png. Built-in Image Gen produced both concepts and three standalone hotel photographs. These depict an illustrative property, not verified Hotel Del Sol facilities. Replace and approve before launch.
+
+Palette: ivory #f7f4ee, olive #26332b, terracotta #a04f35, border #deded4. Admin canvas #f5f6f3 with white surfaces. Serif editorial headings, sans-serif controls, 1200px public container, 64px desktop gutters, square image frames, restrained 3px button radius. Public hero uses photograph plus a localized readability shadow; no global image tint. No hero eyebrow. Native HTML search fields overlap the hero edge. Rooms use two wide photographs and open typography. Experience uses an asymmetric image/text pair. Footer is olive. The admin uses a fixed olive navigation rail, a single metrics strip, clear tables, chart panels and activity list. Mobile stacks columns and turns navigation into a menu.
+
+Text/controls remain native React. Photo prompts: tropical limestone courtyard pool with palm trees; cream deluxe king room with arched terrace door; garden suite sitting area overlooking pool. All requested warm natural afternoon architectural photography, no people, logos or watermarks. Assets: apps/web/public/images/{courtyard,deluxe,suite}.webp. Original generated concepts retained here for design comparison.
