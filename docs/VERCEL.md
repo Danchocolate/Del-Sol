@@ -8,6 +8,8 @@ Hotel Del Sol already uses Vite for the React site. The root `vercel.json` deplo
 2. Use the project's stable production `https://…vercel.app` URL. A custom domain is not needed for the presentation. Put the exact origin, with no path or trailing slash, in `APP_ORIGIN`. Put its hostname alone in `TURNSTILE_HOSTNAME`, and register that exact hostname in Cloudflare Turnstile. If the first deploy is needed to discover the actual URL, set the variables after it and redeploy before testing the API. Preview URLs are different origins and need their own isolated configuration; do not point previews at the live database.
 3. Add the environment variables below in **Vercel → Project → Settings → Environment Variables**, scoped to Production. Only `VITE_TURNSTILE_SITE_KEY` is public. Never prefix the other variables with `VITE_`.
 
+Keep the repository's service install commands in `vercel.json`. They explicitly install build-time dependencies even when `NODE_ENV=production`; otherwise Vite, TypeScript and React type declarations are missing during the build.
+
 | Variable                  | Value                                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `NODE_ENV`                | `production`                                                                                                                    |

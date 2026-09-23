@@ -4,7 +4,7 @@
     "web": {
       "root": "apps/web",
       "framework": "vite",
-      "installCommand": "cd ../.. && npm ci",
+      "installCommand": "cd ../.. && npm ci --include=dev",
       "buildCommand": "cd ../.. && npm run build -w @hotel/shared && npm run build -w @hotel/web",
       "outputDirectory": "dist",
       "headers": [
@@ -29,7 +29,7 @@
       "root": "apps/api",
       "framework": "fastify",
       "entrypoint": "src/index.ts",
-      "installCommand": "cd ../.. && npm ci",
+      "installCommand": "cd ../.. && npm ci --include=dev",
       "buildCommand": "cd ../.. && npm run db:generate && npm run build -w @hotel/shared && npm run build -w @hotel/api"
     }
   },
