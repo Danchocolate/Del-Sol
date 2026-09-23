@@ -16,7 +16,24 @@ if (config.SENTRY_DSN)
     }),
   });
 const app = await buildApp();
-await app.listen({ port: config.PORT, host: process.env.VERCEL ? '0.0.0.0' : '127.0.0.1' });
+await app.ready();
+const listening = app.listen({
+  port: config.PORT,
+  host: process.env.VERCEL ? '0.0.0.0' : '127.0.0.1',
+});
+if (process.env.VERCEL) {
+  // Vercel captures listen() while importing this module, then starts the server itself.
+  // Awaiting the captured call prevents the import (and every request) from completing.
+  void listening.catch((error: unknown) => {
+    app.log.error({
+      event: 'API_STARTUP_FAILED',
+      errorType: error instanceof Error ? error.name : 'Unknown',
+    });
+    process.exit(1);
+  });
+} else {
+  await listening;
+}
 const shutdown = async () => {
   await app.close();
   await db.$disconnect();
