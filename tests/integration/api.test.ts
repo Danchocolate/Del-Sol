@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { hashPassword } from 'better-auth/crypto';
 import type { FastifyInstance } from 'fastify';
@@ -15,6 +15,7 @@ let adminCookie = '';
 let deskCookie = '';
 let editorCookie = '';
 const origin = config.APP_ORIGIN;
+const randomIp = () => `10.${[...randomBytes(3)].join('.')}`;
 async function login(role: 'SUPER_ADMIN' | 'FRONT_DESK' | 'CONTENT_EDITOR', ip: string) {
   const id = randomUUID();
   const email = `${id}@example.test`;
@@ -85,9 +86,9 @@ beforeAll(async () => {
     idempotencyKey: randomUUID(),
   });
   app = await buildApp();
-  adminCookie = await login('SUPER_ADMIN', '127.0.1.1');
-  deskCookie = await login('FRONT_DESK', '127.0.1.2');
-  editorCookie = await login('CONTENT_EDITOR', '127.0.1.3');
+  adminCookie = await login('SUPER_ADMIN', randomIp());
+  deskCookie = await login('FRONT_DESK', randomIp());
+  editorCookie = await login('CONTENT_EDITOR', randomIp());
 });
 afterAll(async () => {
   await app.close();
@@ -164,6 +165,62 @@ describe.sequential('API security boundaries', () => {
       payload: { name: 'Attacker', email: `${randomUUID()}@example.test`, password: randomUUID() },
     });
     expect(response.statusCode).toBeGreaterThanOrEqual(400);
+  });
+  it('lets a signed-in employee change their password and invalidates the old one', async () => {
+    const id = randomUUID();
+    const email = `${id}@example.test`;
+    const currentPassword = `Original-${randomUUID()}`;
+    const newPassword = `Replacement-${randomUUID()}`;
+    await db.user.create({
+      data: {
+        id,
+        name: 'Password Test Employee',
+        email,
+        role: 'FRONT_DESK',
+        emailVerified: true,
+        accounts: {
+          create: {
+            id: randomUUID(),
+            accountId: id,
+            providerId: 'credential',
+            password: await hashPassword(currentPassword),
+          },
+        },
+      },
+    });
+    const signedIn = await app.inject({
+      method: 'POST',
+      url: '/api/auth/sign-in/email',
+      headers: { origin },
+      payload: { email, password: currentPassword },
+      remoteAddress: randomIp(),
+    });
+    expect(signedIn.statusCode).toBe(200);
+    const cookie = signedIn.cookies.map((item) => `${item.name}=${item.value}`).join('; ');
+    const changed = await app.inject({
+      method: 'POST',
+      url: '/api/auth/change-password',
+      headers: { origin, cookie },
+      payload: { currentPassword, newPassword, revokeOtherSessions: true },
+      remoteAddress: randomIp(),
+    });
+    expect(changed.statusCode).toBe(200);
+    const newLogin = await app.inject({
+      method: 'POST',
+      url: '/api/auth/sign-in/email',
+      headers: { origin },
+      payload: { email, password: newPassword },
+      remoteAddress: randomIp(),
+    });
+    expect(newLogin.statusCode).toBe(200);
+    const oldLogin = await app.inject({
+      method: 'POST',
+      url: '/api/auth/sign-in/email',
+      headers: { origin },
+      payload: { email, password: currentPassword },
+      remoteAddress: randomIp(),
+    });
+    expect(oldLogin.statusCode).toBeGreaterThanOrEqual(400);
   });
   it('enforces JSON and body size limits', async () => {
     const text = await app.inject({

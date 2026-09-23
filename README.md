@@ -22,7 +22,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open [the hotel website](http://127.0.0.1:5173) or [staff sign-in](http://127.0.0.1:5173/admin). The API is on `127.0.0.1:3001`. `npm run dev` starts the API, web app and outbox/expiration worker. Use the `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` values in your local `.env`; credentials are never printed by the setup or seed scripts. The seed is repeatable and does not overwrite existing edits or reset passwords.
+Open [the hotel website](http://127.0.0.1:5173) or [staff sign-in](http://127.0.0.1:5173/admin). The API is on `127.0.0.1:3001`. `npm run dev` starts the API, web app and outbox/expiration worker. Use the `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` values in your local `.env`; credentials are never printed by the setup or seed scripts. The seed is repeatable, restricted to localhost, and does not overwrite existing edits or reset passwords.
 
 For an existing local PostgreSQL installation elsewhere, copy `.env.example` to `.env`, create the three empty databases and supply your connection URLs. Generate distinct strong auth and outbox secrets. Do not run `dev:setup` against non-local URLs. `PG_BIN` can select the PostgreSQL binary directory. The local cluster can be stopped with `pg_ctl -D .local/postgres stop -m fast` using the installed PostgreSQL binary.
 
@@ -92,7 +92,7 @@ scripts/                    # Local PostgreSQL setup
 
 The database contains employee auth users/accounts/sessions, guests, room types/physical rooms/images/amenities, maintenance blocks, reservations/allocations/status history/events, hashed verification tokens and access grants, payments/reversals, promotions/targets/redemptions, gallery/content, notifications, settings, append-only audits, encrypted outbox jobs and quotas. Future integration/property/room/rate mappings, sync logs and deduplicated webhook records are schema-only extension points. External credentials would be stored in a secret manager and referenced by identifier, never plaintext columns.
 
-See [architecture decisions](docs/ARCHITECTURE.md), [project rules](AGENTS.md), [deployment notes](docs/DEPLOYMENT.md) and [verification notes](docs/VERIFICATION.md).
+See [architecture decisions](docs/ARCHITECTURE.md), [project rules](AGENTS.md), [deployment notes](docs/DEPLOYMENT.md), [Vercel setup](docs/VERCEL.md), [Supabase transition plan](docs/SUPABASE.md) and [verification notes](docs/VERIFICATION.md).
 
 ## Reservation correctness
 

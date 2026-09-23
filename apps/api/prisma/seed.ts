@@ -1,9 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
-const db = new PrismaClient();
 if (process.env.NODE_ENV === 'production')
   throw new Error('Development seed is forbidden in production');
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl || !['localhost', '127.0.0.1', '[::1]'].includes(new URL(databaseUrl).hostname))
+  throw new Error('Development seed is restricted to a localhost database');
+const db = new PrismaClient();
 const email = process.env.SEED_ADMIN_EMAIL;
 const password = process.env.SEED_ADMIN_PASSWORD;
 if (!email || !password || password.length < 12 || password.startsWith('REPLACE'))

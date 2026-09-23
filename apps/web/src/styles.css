@@ -1018,6 +1018,18 @@ a:hover {
   font-size: 11px;
   color: #9fab95;
 }
+.sidebar-bottom a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  color: #dce4d3;
+  font-size: 12px;
+}
+.sidebar-bottom a:hover,
+.sidebar-bottom a.active {
+  color: white;
+}
 .sidebar-bottom button {
   display: flex;
   gap: 10px;

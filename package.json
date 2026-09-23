@@ -27,6 +27,7 @@
     "db:generate": "prisma generate --schema apps/api/prisma/schema.prisma",
     "db:migrate": "prisma migrate deploy --schema apps/api/prisma/schema.prisma",
     "db:seed": "tsx --env-file=.env apps/api/prisma/seed.ts",
+    "db:bootstrap-admin": "node scripts/bootstrap-admin.mjs",
     "dev:setup": "node scripts/setup-local.mjs"
   },
   "devDependencies": {

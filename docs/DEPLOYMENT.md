@@ -4,7 +4,7 @@
 
 Serve the Vite production bundle under one HTTPS origin and reverse-proxy `/api` to Fastify. Fastify currently listens on loopback, intended for a same-host trusted proxy. Configure a different bind address explicitly if containerizing; never expose the API directly to the Internet by accident. Use a supervised API process plus a separate supervised `node apps/api/dist/worker.js` process. All processes share PostgreSQL and the outbox encryption key. No Redis is required.
 
-Build: `npm ci`, `npm run db:generate`, `npm run build`. Set server environment securely. Run `npm run db:migrate` as a dedicated migration role, then start `node apps/api/dist/index.js` and the worker. Do not run the development seed in production. Provision the first employee through a reviewed administrative bootstrap process using Better Auth's `hashPassword`; do not insert plaintext passwords. Require a strong unique password and verify the intended SUPER_ADMIN recipient.
+Build: `npm ci`, `npm run db:generate`, `npm run build`. Set server environment securely. Run `npm run db:migrate` as a dedicated migration role, then start `node apps/api/dist/index.js` and the worker. Do not run the development seed in production. The first Supabase administrator was provisioned by the one-time `npm run db:bootstrap-admin` script using Better Auth's `hashPassword`; it refuses to replace an existing super administrator. Keep the generated credential file local and ignored by Git. Require a strong unique password and verify the intended SUPER_ADMIN recipient. For the Vercel frontend setup, see [VERCEL.md](VERCEL.md).
 
 Use separate non-owner runtime and schema-owner migration credentials. Restrict runtime table grants to required operations. Never grant the web process permission to disable triggers, truncate tables, alter schema or remove audit history. Password/account recovery currently needs an administrator-assisted operational procedure; add a verified employee recovery flow and MFA before a broad production rollout.
 
@@ -26,7 +26,7 @@ R2 or another S3-compatible object store must be configured. Supabase Storage ca
 
 ## Backups and migrations
 
-The initial migration only creates objects; the second adds the overlap constraint and append-only triggers. No schema reset, destructive migration or production data deletion command is part of setup. New migrations must be reviewed and tested on a restored staging copy, with a tested recovery path. Enable encrypted backups, point-in-time recovery, retention and scheduled restore drills. Preserve both database state and the outbox encryption key in separate protected backup systems.
+The initial migration only creates objects; the second adds the overlap constraint and append-only triggers; the third isolates Supabase Data API roles from the application's tables. No schema reset, destructive migration or production data deletion command is part of setup. New migrations must be reviewed and tested on a restored staging copy, with a tested recovery path. Enable encrypted backups, point-in-time recovery, retention and scheduled restore drills. Preserve both database state and the outbox encryption key in separate protected backup systems.
 
 ## Business assumptions needing acceptance
 

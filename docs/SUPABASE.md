@@ -1,0 +1,19 @@
+# Supabase testing and eventual live use
+
+The supplied Supabase project's `public` schema received the checked-in Prisma migrations on 23 September 2026. Verification found 36 hotel tables, the `btree_gist` extension, and the physical-room overlap constraint. A third migration enables row security and revokes Data API roles' table privileges because this application uses only its own Fastify API. No development seed, test booking, or guest record was inserted into that project.
+
+## Keep test records separate
+
+Use the existing isolated local PostgreSQL databases for development, integration tests, browser tests and demonstration bookings. `npm run db:seed` is restricted to localhost because its room inventory, rates, content and administrator are illustrative. Do not point `TEST_DATABASE_URL` or `E2E_DATABASE_URL` at Supabase. Do not run automated tests against a database that may hold real guests: the suites append fixtures and reservation history is intentionally not deletable through normal operations.
+
+If a shared remote test environment becomes necessary, use a separate Supabase project or a paid preview branch. A second schema in the same project separates table names but still shares the database, credentials and resource limits, so it is not equivalent isolation. Supabase's [environment guidance](https://supabase.com/docs/guides/deployment/managing-environments) uses separate projects for staging and production.
+
+## Before first real booking
+
+1. Rotate the database password previously pasted into chat. Store the new session-pooler URL in a server secret manager; do not commit it or send it through chat. Use TLS. The current app is a long-running API/worker; the Supabase [Prisma guide](https://supabase.com/docs/guides/database/prisma) recommends the Session pooler on port 5432 where a direct IPv6 connection is unavailable.
+2. Decide who owns the Supabase project and guest data. If the hotel will own its own Supabase account, arrange that before taking real bookings or document the later handover and access responsibilities.
+3. Replace illustrative photos and copy, enter verified room types/physical rooms, rates, policies, contact information, and approved privacy/booking terms. The first SUPER_ADMIN has been created using a one-time bootstrap with a generated credential in an ignored local file; change it after first sign-in. Do not run the development seed.
+4. Configure HTTPS, the final domain and exact origin, real Turnstile keys, a verified Resend domain, object storage, worker supervision, monitoring, edge limits and restricted database roles. Test the complete guest and staff journeys in a staging environment.
+5. Establish encrypted off-site exports and restore drills before real data is collected. Supabase's [backup guidance](https://supabase.com/docs/guides/platform/backups) says Free projects need regular exports; managed daily backups are a paid-plan feature. Its [production checklist](https://supabase.com/docs/guides/deployment/going-into-prod) also notes that Free projects may pause after inactivity.
+
+The project can be upgraded in place if ownership and requirements allow. If a new project is used later, plan a maintenance window, stop writes, export and restore the database, preserve migration history and historical payment/audit records, copy media objects separately, move server secrets and verify counts and booking flows before changing traffic. The Git repository holds schema and code, not guest records or uploaded media. A database move is a separate, validated operation and is not completed by upgrading the plan or changing the connection URL alone.

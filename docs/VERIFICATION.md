@@ -12,14 +12,14 @@ Verified locally on 23 September 2026 on Windows, Node 25.5.0, PostgreSQL 18 and
 | Prettier                             | Passed                                                                                                                                             |
 | Strict TypeScript                    | API, web, shared package, tests and test configuration passed                                                                                      |
 | Unit and React tests                 | 13 passed                                                                                                                                          |
-| PostgreSQL/API integration tests     | 40 passed                                                                                                                                          |
+| PostgreSQL/API integration tests     | 41 passed, including staff password rotation                                                                                                       |
 | Production build                     | Shared package, API and Vite web bundle passed                                                                                                     |
-| Database migrations                  | Both additive migrations applied; development schema up to date                                                                                    |
+| Database migrations                  | Three additive migrations applied; development and Supabase schemas up to date                                                                     |
 | Playwright                           | 3 journeys passed, including guest and staff operations and responsive smoke checks                                                                |
 | Browser inspection                   | Correct page identity; meaningful content; no framework error overlay; no relevant console warnings/errors; real interaction and screenshot checks |
 | Codex Security plugin scan           | **Incomplete**: initialization failed in the plugin's internal workbench command, before a scan was created                                        |
 
-These are 56 passing tests, not a quantitative coverage percentage or a production security certification. The simulated failed-email test deliberately emits a sanitized `EMAIL_DELIVERY_FAILED` event and then verifies successful durable retry.
+These are 57 passing tests, not a quantitative coverage percentage or a production security certification. The simulated failed-email test deliberately emits a sanitized `EMAIL_DELIVERY_FAILED` event and then verifies successful durable retry.
 
 ## Critical behaviors exercised
 

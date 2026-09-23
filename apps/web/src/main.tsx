@@ -12,6 +12,7 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const Booking = lazy(() => import('./pages/Booking'));
 const GuestReservation = lazy(() => import('./pages/GuestReservation'));
 const AdminLayout = lazy(() => import('./admin/AdminLayout'));
+const Account = lazy(() => import('./admin/Account'));
 const Dashboard = lazy(() => import('./admin/Dashboard'));
 const Reservations = lazy(() => import('./admin/Reservations'));
 const RoomsAdmin = lazy(() => import('./admin/RoomsAdmin'));
@@ -49,6 +50,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="reservation/:reference" element={<GuestReservation />} />
           </Route>
           <Route path="admin" element={<AdminLayout />}>
+            <Route path="account" element={<Account />} />
             <Route index element={<Dashboard />} />
             <Route path="reservations" element={<Reservations />} />
             <Route path="reservations/:id" element={<Reservations />} />

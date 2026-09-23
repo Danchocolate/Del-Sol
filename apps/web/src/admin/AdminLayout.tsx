@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   Mail,
+  KeyRound,
 } from 'lucide-react';
 import { hasPermission } from '@hotel/shared';
 import { api, send, useApi, message } from '../lib/api';
@@ -143,6 +144,9 @@ export default function AdminLayout() {
               ))}
           </nav>
           <div className="sidebar-bottom">
+            <NavLink to="/admin/account" onClick={() => setOpen(false)}>
+              <KeyRound size={17} /> Your account
+            </NavLink>
             <p>
               Brighter stays.
               <br />
