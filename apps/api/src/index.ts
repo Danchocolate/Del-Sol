@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 import { config } from './config.js';
-import { buildApp } from './app.js';
+import { buildApp } from './create-app.js';
 import { db } from './lib/db.js';
 if (config.SENTRY_DSN)
   Sentry.init({

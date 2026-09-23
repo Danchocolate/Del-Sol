@@ -17,7 +17,18 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
       ...options.headers,
     },
   });
-  const data: unknown = await response.json();
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
+    throw new ApiError(
+      response.status,
+      'INVALID_RESPONSE',
+      response.ok
+        ? 'The server returned an unexpected response. Please try again.'
+        : 'The server is unavailable right now. Please try again later.',
+    );
+  }
   if (!response.ok) {
     const error = data as { code?: string; message?: string; issues?: { message: string }[] };
     throw new ApiError(

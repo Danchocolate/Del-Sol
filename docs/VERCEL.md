@@ -10,6 +10,8 @@ Hotel Del Sol already uses Vite for the React site. The root `vercel.json` deplo
 
 Keep the repository's service install commands in `vercel.json`. They explicitly install build-time dependencies even when `NODE_ENV=production`; otherwise Vite, TypeScript and React type declarations are missing during the build.
 
+The API service generates Prisma Client and builds the shared workspace, then lets Vercel compile its Fastify `src/index.ts` entrypoint. Do not add the API TypeScript build to this service: emitting `dist/app.js` during Vercel's build can make Fastify detection load the library module as a CommonJS function instead of the server entrypoint.
+
 | Variable                  | Value                                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `NODE_ENV`                | `production`                                                                                                                    |

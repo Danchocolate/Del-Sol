@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { hashPassword } from 'better-auth/crypto';
 import type { FastifyInstance } from 'fastify';
-import { buildApp } from '../../apps/api/src/app.js';
+import { buildApp } from '../../apps/api/src/create-app.js';
 import { db } from '../../apps/api/src/lib/db.js';
 import { config } from '../../apps/api/src/config.js';
 import { emailQuota } from '../../apps/api/src/modules/auth/abuse.js';

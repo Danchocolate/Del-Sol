@@ -30,7 +30,7 @@
       "framework": "fastify",
       "entrypoint": "src/index.ts",
       "installCommand": "cd ../.. && npm ci --include=dev",
-      "buildCommand": "cd ../.. && npm run db:generate && npm run build -w @hotel/shared && npm run build -w @hotel/api"
+      "buildCommand": "cd ../.. && npm run db:generate && npm run build -w @hotel/shared"
     }
   },
   "rewrites": [
