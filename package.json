@@ -22,7 +22,7 @@
     "test": "vitest run",
     "pretest:integration": "npm run build -w @hotel/shared",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "pretest:e2e": "npm run build -w @hotel/shared",
+    "pretest:e2e": "npm run build -w @hotel/shared && npm run build -w @hotel/web",
     "test:e2e": "playwright test",
     "db:generate": "prisma generate --schema apps/api/prisma/schema.prisma",
     "db:migrate": "prisma migrate deploy --schema apps/api/prisma/schema.prisma",

@@ -1,15 +1,63 @@
-# Deploying the web app with Vercel
+# Vercel + Supabase demo deployment
 
-Vercel can host the Vite frontend. This repository's Fastify API and the separate expiration/email worker are long-running Node processes; deploy both to an always-on backend host before directing real guests to the Vercel site. The frontend sends requests to `/api`, so production must proxy that path to the backend under the same HTTPS origin.
+Hotel Del Sol already uses Vite for the React site. The root `vercel.json` deploys the Vite site and Fastify API as two [Vercel Services](https://vercel.com/docs/services) in **one Vercel project and one HTTPS origin**. The API runs as a Function when called; no always-on Node host is needed. Services are currently labeled Beta and are available on all plans. The existing PostgreSQL booking transactions, server-side authorization, and email outbox remain in place.
 
-## Set up in this order
+## Set up the Vercel project
 
-1. Rotate the Supabase database password that was shared in chat. Keep the new session-pooler connection string in the backend host's secret manager with TLS enabled. The checked-in migrations, including the Supabase Data API isolation migration, are already applied. Do not run the development seed on Supabase.
-2. Choose an always-on Node host for the API and worker. Build the npm workspaces from the repository root (`npm ci`, `npm run db:generate`, `npm run build`), run `npm run db:migrate` during releases, then supervise `node apps/api/dist/index.js` and `node apps/api/dist/worker.js` as separate processes. The API currently binds to `127.0.0.1`; use a trusted reverse proxy on the host, or review and explicitly configure its bind address for a private container network.
-3. Set backend secrets and configuration: `DATABASE_URL`, a random `BETTER_AUTH_SECRET` of at least 32 characters, a random 64-character hex `OUTBOX_ENCRYPTION_KEY`, `APP_ORIGIN` equal to the final Vercel/custom HTTPS origin, `NODE_ENV=production`, `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `EMAIL_FROM` using a verified domain, real `TURNSTILE_SECRET_KEY` and `TURNSTILE_HOSTNAME`, and optional storage/Sentry variables described in `.env.example`. Never set these in the browser build or a public `VITE_` variable. Preserve the outbox key across restarts and migrations.
-4. Create a Vercel project from the GitHub repository. Keep the repository root as the build root. Use `npm run build` for the build command and `apps/web/dist` for the output directory. Set only `VITE_TURNSTILE_SITE_KEY` from the public Turnstile site key. Once the backend URL is known, add a root `vercel.json` with an external rewrite for `/api/:path*` to `https://YOUR-BACKEND-HOST/api/:path*`, replacing the placeholder with the actual HTTPS API origin. Follow it with a SPA fallback rewrite to `/index.html`. Add equivalent static-document security headers to those in `deploy/nginx.conf.example`. Review Vercel's [Vite deployment](https://vercel.com/docs/frameworks/frontend/vite) and [external rewrite](https://vercel.com/docs/routing/rewrites) instructions when entering these settings.
-5. Attach the real domain to Vercel, update `APP_ORIGIN` on the API to match it exactly, configure edge rate limits and safe proxy trust, then test the full booking, verification email, cancellation and staff sign-in flows through that domain. Monitor the worker and outbox before accepting real reservations.
+1. Import `Danchocolate/Del-Sol` from GitHub with the **repository root** as the Root Directory. In Build and Deployment settings, select **Services** as the Framework Preset; this is required for the `services` block in `vercel.json` to take effect. Do not set a separate build command or output directory in the dashboard. The file has both service builds and same-origin `/api` routing. The web service keeps Vite's SPA deep-link rewrite.
+2. Use the project's stable production `https://…vercel.app` URL. A custom domain is not needed for the presentation. Put the exact origin, with no path or trailing slash, in `APP_ORIGIN`. Put its hostname alone in `TURNSTILE_HOSTNAME`, and register that exact hostname in Cloudflare Turnstile. If the first deploy is needed to discover the actual URL, set the variables after it and redeploy before testing the API. Preview URLs are different origins and need their own isolated configuration; do not point previews at the live database.
+3. Add the environment variables below in **Vercel → Project → Settings → Environment Variables**, scoped to Production. Only `VITE_TURNSTILE_SITE_KEY` is public. Never prefix the other variables with `VITE_`.
 
-The Admin account has been provisioned in Supabase without sample rooms or bookings. Its one-time generated credential is stored only in the ignored local `.local/supabase-admin-credentials.txt` file. Sign in at `/admin` using its email address, then use **Your account** to change the password. Remove the local credential file after the password has been changed and safely recorded.
+| Variable                  | Value                                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                | `production`                                                                                                                    |
+| `APP_ORIGIN`              | Exact `https://…vercel.app` production origin                                                                                   |
+| `DATABASE_URL`            | New Supabase **Transaction pooler** URL, port `6543`, with `sslmode=require&pgbouncer=true&connection_limit=1` query parameters |
+| `BETTER_AUTH_SECRET`      | Unique random string, at least 32 characters                                                                                    |
+| `OUTBOX_ENCRYPTION_KEY`   | Unique random **64-character hex** string; preserve it across redeploys                                                         |
+| `JOBS_SECRET`             | Unique random string, at least 32 characters; also store the same value in Supabase Vault                                       |
+| `EMAIL_PROVIDER`          | `resend`                                                                                                                        |
+| `RESEND_API_KEY`          | Secret key from Resend                                                                                                          |
+| `EMAIL_FROM`              | Sender address Resend permits, for example `Hotel Del Sol <reservations@YOUR-VERIFIED-DOMAIN>`                                  |
+| `TURNSTILE_SECRET_KEY`    | Cloudflare Turnstile secret for the production hostname                                                                         |
+| `TURNSTILE_HOSTNAME`      | The hostname in `APP_ORIGIN`, without `https://`                                                                                |
+| `VITE_TURNSTILE_SITE_KEY` | Public Turnstile site key for that hostname                                                                                     |
 
-Before launch, enter the hotel's verified property details, room inventory and rates, booking policies, media, approved privacy copy and contact details. Set up off-site Supabase backups and test a restore. A Free Supabase project needs an independent export/backup process; see [Supabase backups](https://supabase.com/docs/guides/platform/backups). Treat the current project as capable of holding real guest data once bookings begin, even if ownership may change later. Follow the [Supabase transition plan](SUPABASE.md) for a future migration.
+Optional `STORAGE_*` variables enable image uploads; optional `SENTRY_DSN` enables error reporting. See `.env.example`. Use random secret generators, never reuse the database password. Rotate the Supabase database password previously shared in chat before putting the new URL in Vercel. URL-encode reserved characters in the password. The Transaction pooler and single-connection Prisma setting are [Supabase's recommendation for serverless functions](https://supabase.com/docs/guides/database/connecting-to-postgres). Use the Session pooler (port `5432`) or direct connection for Prisma migrations, not the Transaction pooler. The current Supabase schema was already migrated; do not run the development seed or reset it.
+
+Resend's testing sender can be useful for a presentation, but it cannot be treated as guest email delivery for a real hotel. Verify a sending domain and confirm delivery to external addresses before accepting real reservations. The website can use the Vercel URL even when the email sender uses a different verified domain.
+
+## Schedule retries and hold expiry
+
+Booking and access requests attempt queued email delivery as soon as their database transaction commits. The outbox retains failed attempts. The API exposes `POST /api/internal/jobs`, protected by `JOBS_SECRET`, to retry email, expire holds, and clean up expired grants. Unlike Vercel Hobby Cron, [Supabase Cron](https://supabase.com/docs/guides/cron) can call it every minute. This invokes a Function briefly each time; there is no continuously running worker. It still consumes Vercel Function and Supabase usage, so monitor plan limits. A delivery time under one minute is a target, not a guarantee when providers fail or queues grow.
+
+After the Vercel URL responds to `/api/health`, enable Supabase Cron and `pg_net` in the Supabase Dashboard. Create **two Vault secrets** in the Dashboard:
+
+- `hotel_del_sol_jobs_url` = `https://YOUR-PRODUCTION-VERCEL-URL/api/internal/jobs`
+- `hotel_del_sol_jobs_secret` = the exact Vercel `JOBS_SECRET` value
+
+Then run this SQL in the Supabase SQL Editor (it stores only Vault secret names in the Cron job):
+
+```sql
+select cron.schedule(
+  'hotel-del-sol-jobs',
+  '* * * * *',
+  $$
+  select net.http_post(
+    url := (select decrypted_secret from vault.decrypted_secrets where name = 'hotel_del_sol_jobs_url'),
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'hotel_del_sol_jobs_secret')
+    ),
+    body := '{}'::jsonb,
+    timeout_milliseconds := 30000
+  );
+  $$
+);
+```
+
+After a minute, check the Cron run history and the app's staff **Job health** page. Confirm the HTTP response was successful; a Cron entry can succeed in queueing an HTTP call even when the remote API rejects it. A `401` means the Vault and Vercel secrets differ. Do not expose `JOBS_SECRET` in the browser or use a public Cron endpoint without the bearer secret.
+
+## Before real bookings
+
+The Admin account already exists in Supabase. Its generated initial password is stored only in the ignored local `.local/supabase-admin-credentials.txt` file; use **Your account** to change it after sign-in. Enter the hotel's actual inventory, rates, policies, contact details, and approved content. Test booking, verification email, cancellation, staff sign-in, outbox retries, and expiry through the exact production URL. Configure off-site database backups, monitoring, and a restore drill. A free demo project is not a production handoff. Vercel [Hobby is for personal, non-commercial use](https://vercel.com/docs/plans/hobby); use a commercial-eligible plan or host before operating the hotel's business site.

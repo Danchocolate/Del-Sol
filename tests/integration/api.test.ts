@@ -95,6 +95,23 @@ afterAll(async () => {
   await db.$disconnect();
 });
 describe.sequential('API security boundaries', () => {
+  it('requires the jobs bearer secret without a browser Origin', async () => {
+    const wrong = await app.inject({
+      method: 'POST',
+      url: '/api/internal/jobs',
+      headers: { authorization: 'Bearer wrong' },
+      payload: {},
+    });
+    expect(wrong.statusCode).toBe(401);
+    const valid = await app.inject({
+      method: 'POST',
+      url: '/api/internal/jobs',
+      headers: { authorization: `Bearer ${config.JOBS_SECRET}` },
+      payload: {},
+    });
+    expect(valid.statusCode).toBe(200);
+    expect(valid.json()).toEqual({ processed: expect.any(Number) });
+  });
   it('requires authentication on every staff surface', async () => {
     for (const url of [
       '/api/admin/me',

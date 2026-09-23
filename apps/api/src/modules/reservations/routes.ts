@@ -13,6 +13,7 @@ import { config } from '../../config.js';
 import { staff } from '../auth/permissions.js';
 import { emailQuota, verifyTurnstile } from '../auth/abuse.js';
 import { findRooms, selectRooms, validateStay } from '../availability/service.js';
+import { deliverOutboxBatch } from '../notifications/worker.js';
 import { calculatePrice, eligiblePromotion } from '../promotions/pricing.js';
 import {
   createReservation,
@@ -28,6 +29,13 @@ const rate = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } };
 const idSchema = z.object({ id: z.string().uuid() });
 const referenceSchema = z.object({ reference: lookupSchema.shape.reference });
 export async function reservationRoutes(app: FastifyInstance) {
+  const sendQueuedEmail = async () => {
+    try {
+      await deliverOutboxBatch();
+    } catch {
+      app.log.error({ event: 'EMAIL_JOB_WAKE_FAILURE' });
+    }
+  };
   app.get('/api/availability', async (request) => {
     const input = searchSchema.parse(request.query);
     return inventoryTransaction(async (tx) => {
@@ -68,17 +76,21 @@ export async function reservationRoutes(app: FastifyInstance) {
     await verifyTurnstile(input.turnstileToken, request.ip);
     await emailQuota(input.email, 'booking', 5);
     const result = await createReservation(input);
+    await sendQueuedEmail();
     return reply.code(201).send(result);
   });
   app.post('/api/reservations/access', rate, async (request) => {
     const input = lookupSchema.parse(request.body);
     await verifyTurnstile(input.turnstileToken, request.ip);
     await emailQuota(input.email, 'access', 4);
-    return requestAccess(input.reference, input.email);
+    const result = await requestAccess(input.reference, input.email);
+    await sendQueuedEmail();
+    return result;
   });
   app.post('/api/reservations/verify', rate, async (request, reply) => {
     const { token } = tokenSchema.parse(request.body);
     const result = await exchangeToken(token);
+    await sendQueuedEmail();
     reply.setCookie('hds_guest', result.grant, {
       path: '/api/reservations',
       httpOnly: true,
@@ -114,7 +126,9 @@ export async function reservationRoutes(app: FastifyInstance) {
     const { reference } = referenceSchema.parse(request.params);
     const input = cancellationSchema.parse(request.body);
     const reservation = await resolveGrant(request.cookies.hds_guest, reference);
-    return cancelReservation(reservation.id, input.reason);
+    const result = await cancelReservation(reservation.id, input.reason);
+    await sendQueuedEmail();
+    return result;
   });
   app.get('/api/admin/reservations', async (request) => {
     await staff(request, 'reservations:read');
@@ -173,7 +187,9 @@ export async function reservationRoutes(app: FastifyInstance) {
       .safeExtend({ source: z.enum(['WALK_IN', 'PHONE']) })
       .parse(request.body);
     const { source, ...booking } = input;
-    return createReservation(booking, source, user.id);
+    const result = await createReservation(booking, source, user.id);
+    await sendQueuedEmail();
+    return result;
   });
   app.post('/api/admin/reservations/:id/status', async (request) => {
     const user = await staff(request, 'reservations:write');
@@ -182,6 +198,8 @@ export async function reservationRoutes(app: FastifyInstance) {
       .object({ status: z.enum(statuses), reason: z.string().max(500).optional() })
       .strict()
       .parse(request.body);
-    return staffTransition(id, input.status, user.id, input.reason);
+    const result = await staffTransition(id, input.status, user.id, input.reason);
+    await sendQueuedEmail();
+    return result;
   });
 }

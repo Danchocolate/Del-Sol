@@ -7,6 +7,7 @@ if (!['127.0.0.1', 'localhost'].includes(url.hostname) || !url.pathname.endsWith
   throw new Error('Integration tests require a localhost database ending in _test');
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 process.env.NODE_ENV = 'test';
+process.env.JOBS_SECRET = 'integration-test-only-jobs-secret-123456789';
 export default defineConfig({
   test: {
     include: ['tests/integration/**/*.test.ts'],

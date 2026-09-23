@@ -8,6 +8,15 @@ import { expireHolds } from '../reservations/service.js';
 const payloadSchema = z.object({ to: z.email(), subject: z.string(), text: z.string() });
 export async function runJobs() {
   await inventoryTransaction(expireHolds);
+  const count = await deliverOutboxBatch();
+  // Tokens, grants and quotas have no historical value after retention window.
+  const retention = new Date(Date.now() - 7 * 86400000);
+  await db.verificationToken.deleteMany({ where: { expiresAt: { lt: retention } } });
+  await db.guestGrant.deleteMany({ where: { expiresAt: { lt: retention } } });
+  await db.emailQuota.deleteMany({ where: { resetAt: { lt: retention } } });
+  return count;
+}
+export async function deliverOutboxBatch() {
   const leaseId = randomUUID();
   const rows = await db.$queryRaw<
     { id: string; encryptedPayload: string; attempts: number; dedupeKey: string }[]
@@ -49,10 +58,5 @@ export async function runJobs() {
       }
     }),
   );
-  // Tokens, grants and quotas have no historical value after retention window.
-  const retention = new Date(Date.now() - 7 * 86400000);
-  await db.verificationToken.deleteMany({ where: { expiresAt: { lt: retention } } });
-  await db.guestGrant.deleteMany({ where: { expiresAt: { lt: retention } } });
-  await db.emailQuota.deleteMany({ where: { resetAt: { lt: retention } } });
   return rows.length;
 }

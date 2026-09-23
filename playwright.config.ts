@@ -40,7 +40,7 @@ export default defineConfig({
       timeout: 30000,
     },
     {
-      command: 'npm run dev -w @hotel/web -- --port 5174',
+      command: 'npm run preview -w @hotel/web -- --port 5174',
       url: 'http://127.0.0.1:5174',
       env,
       reuseExistingServer: false,

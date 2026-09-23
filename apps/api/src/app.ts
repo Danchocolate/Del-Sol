@@ -5,9 +5,10 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
 import { fromNodeHeaders } from 'better-auth/node';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import * as Sentry from '@sentry/node';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { config } from './config.js';
 import { db } from './lib/db.js';
 import { AppError, assert } from './lib/errors.js';
@@ -20,6 +21,7 @@ import { promotionRoutes } from './modules/promotions/routes.js';
 import { galleryRoutes } from './modules/gallery/routes.js';
 import { userRoutes } from './modules/users/routes.js';
 import { reportRoutes } from './modules/reports/routes.js';
+import { runJobs } from './modules/notifications/worker.js';
 export async function buildApp() {
   const app = Fastify({
     bodyLimit: 32768,
@@ -76,12 +78,13 @@ export async function buildApp() {
     )
       reply.header('Cache-Control', 'no-store');
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
-      assert(
-        request.headers.origin === config.APP_ORIGIN,
-        403,
-        'INVALID_ORIGIN',
-        'Request origin is not permitted.',
-      );
+      if (request.url !== '/api/internal/jobs')
+        assert(
+          request.headers.origin === config.APP_ORIGIN,
+          403,
+          'INVALID_ORIGIN',
+          'Request origin is not permitted.',
+        );
       assert(
         request.headers['content-type']?.startsWith('application/json') ||
           request.headers['content-type']?.startsWith('multipart/form-data'),
@@ -177,6 +180,21 @@ export async function buildApp() {
   app.get('/api/health', async () => {
     await db.$queryRaw`SELECT 1`;
     return { status: 'ok' };
+  });
+  app.post('/api/internal/jobs', { bodyLimit: 32 }, async (request, reply) => {
+    assert(config.JOBS_SECRET, 503, 'JOBS_NOT_CONFIGURED', 'Jobs are not configured.');
+    const provided = request.headers.authorization ?? '';
+    const digest = (value: string) => createHash('sha256').update(value).digest();
+    assert(
+      provided.length <= 256 &&
+        timingSafeEqual(digest(provided), digest(`Bearer ${config.JOBS_SECRET}`)),
+      401,
+      'UNAUTHORIZED',
+      'Authentication required.',
+    );
+    z.object({}).strict().parse(request.body);
+    reply.header('Cache-Control', 'no-store');
+    return { processed: await runJobs() };
   });
   app.get('/api/public', async () => {
     const [content, rooms, gallery, promotions, settings] = await Promise.all([

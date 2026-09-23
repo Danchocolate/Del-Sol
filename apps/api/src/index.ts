@@ -16,7 +16,7 @@ if (config.SENTRY_DSN)
     }),
   });
 const app = await buildApp();
-await app.listen({ port: config.PORT, host: '127.0.0.1' });
+await app.listen({ port: config.PORT, host: process.env.VERCEL ? '0.0.0.0' : '127.0.0.1' });
 const shutdown = async () => {
   await app.close();
   await db.$disconnect();

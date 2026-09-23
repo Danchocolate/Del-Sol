@@ -11,6 +11,7 @@ const schema = z.object({
   EMAIL_FROM: z.string().default('Hotel Del Sol <reservations@example.com>'),
   TURNSTILE_SECRET_KEY: z.string().min(1),
   TURNSTILE_HOSTNAME: z.string().min(1),
+  JOBS_SECRET: z.string().min(32).optional(),
   STORAGE_ENDPOINT: z.string().optional(),
   STORAGE_REGION: z.string().default('auto'),
   STORAGE_BUCKET: z.string().optional(),
@@ -31,7 +32,9 @@ if (config.NODE_ENV === 'production') {
     config.EMAIL_FROM.includes('example.com') ||
     config.TURNSTILE_SECRET_KEY.startsWith('1x') ||
     config.TURNSTILE_SECRET_KEY.startsWith('2x') ||
-    config.TURNSTILE_SECRET_KEY.startsWith('3x')
+    config.TURNSTILE_SECRET_KEY.startsWith('3x') ||
+    !config.JOBS_SECRET ||
+    config.JOBS_SECRET.startsWith('REPLACE')
   )
-    throw new Error('Production requires HTTPS, Resend and a real Turnstile secret');
+    throw new Error('Production requires HTTPS, Resend, Turnstile and a jobs secret');
 }
