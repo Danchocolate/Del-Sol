@@ -14,6 +14,8 @@ The API service generates Prisma Client and builds the shared workspace, then le
 
 The API Function is pinned to Vercel's `syd1` region in `vercel.json`, next to this project's Sydney Supabase database. This avoids a database round trip from Washington on every API request. Vercel Hobby supports one chosen Function region; static Vite assets still use Vercel's CDN. Warm requests should be much faster, but cold starts, network conditions, and a paused Supabase Free project can still exceed 2–3 seconds. Check the Function region and response time after deployment before promising a target to guests.
 
+`GET /api/public` uses a 30-second Vercel CDN cache with stale responses while revalidating; it contains the same hotel data for every visitor. Staff changes to public room details, photos, rates, and content can take up to about 30 seconds to appear at a given edge location. Availability and final booking prices are always rechecked server-side, and staff and reservation endpoints are never publicly cached.
+
 | Variable                  | Value                                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `NODE_ENV`                | `production`                                                                                                                    |

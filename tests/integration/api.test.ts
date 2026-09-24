@@ -403,7 +403,11 @@ describe.sequential('API security boundaries', () => {
       expect(second.statusCode).toBe(200);
       expect(first.json().position).toBe((previous._max.position ?? -1) + 1);
       expect(second.json().position).toBe(first.json().position + 1);
-      const publicRooms = (await app.inject({ url: '/api/public' })).json().rooms;
+      const publicResponse = await app.inject({ url: '/api/public' });
+      expect(publicResponse.headers['vercel-cdn-cache-control']).toBe(
+        'public, s-maxage=30, stale-while-revalidate=120',
+      );
+      const publicRooms = publicResponse.json().rooms;
       const photos = publicRooms.find((room: { id: string }) => room.id === roomType.id).images;
       expect(
         photos.findIndex((image: { id: string }) => image.id === first.json().id),

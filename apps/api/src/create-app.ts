@@ -197,7 +197,9 @@ export async function buildApp() {
     reply.header('Cache-Control', 'no-store');
     return { processed: await runJobs() };
   });
-  app.get('/api/public', async () => {
+  app.get('/api/public', async (_request, reply) => {
+    reply.header('Cache-Control', 'public, max-age=0, must-revalidate');
+    reply.header('Vercel-CDN-Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120');
     const [content, rooms, gallery, promotions, settings] = await Promise.all([
       db.hotelContent.findUniqueOrThrow({ where: { id: 'hotel' } }),
       db.roomType.findMany({
