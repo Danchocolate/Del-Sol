@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { money } from '@hotel/shared';
 import { usePublic } from '../components/PublicLayout';
 import { RoomCard } from '../components/RoomCard';
+import { RoomPhotoGallery } from '../components/RoomPhotoGallery';
 import { Arrow, Empty } from '../components/ui';
 export default function Rooms() {
   const { rooms } = usePublic();
@@ -28,7 +29,7 @@ export default function Rooms() {
             </p>
           </div>
         </div>
-        <img className="detail-image" src={room.images[0]?.url} alt={room.images[0]?.alt} />
+        <RoomPhotoGallery key={room.id} room={room} />
         <div className="page-wrap detail-grid">
           <div>
             <h2>Make yourself at home.</h2>
@@ -39,15 +40,6 @@ export default function Rooms() {
                 <li key={a.amenity.name}>{a.amenity.name}</li>
               ))}
             </ul>
-            {room.images.slice(1).map((image) => (
-              <img
-                className="extra-room-image"
-                key={image.id}
-                src={image.url}
-                alt={image.alt}
-                loading="lazy"
-              />
-            ))}
           </div>
           <aside className="booking-aside">
             <h3>

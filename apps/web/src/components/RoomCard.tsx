@@ -7,7 +7,7 @@ export function RoomCard({ room }: { room: RoomTypeView }) {
       <Link to={`/rooms/${room.slug}`}>
         <img
           src={room.images[0]?.url ?? '/images/deluxe.webp'}
-          alt={room.images[0]?.alt ?? room.name}
+          alt={room.images[0]?.alt ?? 'Illustrative room concept'}
           loading="lazy"
         />
       </Link>

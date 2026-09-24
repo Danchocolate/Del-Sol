@@ -128,9 +128,22 @@ export default function Booking() {
             </button>
           </form>
           <aside className="stay-summary">
-            <img src={selected.roomType.images[0]?.url} alt={selected.roomType.name} />
+            <img
+              src={selected.roomType.images[0]?.url ?? '/images/deluxe.webp'}
+              alt={selected.roomType.images[0]?.alt ?? 'Illustrative room concept'}
+            />
             <div>
               <h3>{selected.roomType.name}</h3>
+              {selected.roomType.images.length > 1 ? (
+                <Link
+                  className="text-link"
+                  to={`/rooms/${selected.roomType.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Browse all {selected.roomType.images.length} room photos
+                </Link>
+              ) : null}
               <p>{input.success ? `${input.data.checkIn} → ${input.data.checkOut}` : ''}</p>
               <p>
                 {input.success
@@ -176,8 +189,8 @@ export default function Booking() {
                 {data.map((item) => (
                   <article className="search-result" key={item.roomType.id}>
                     <img
-                      src={item.roomType.images[0]?.url}
-                      alt={item.roomType.images[0]?.alt ?? item.roomType.name}
+                      src={item.roomType.images[0]?.url ?? '/images/deluxe.webp'}
+                      alt={item.roomType.images[0]?.alt ?? 'Illustrative room concept'}
                     />
                     <div>
                       <h2>{item.roomType.name}</h2>
@@ -187,7 +200,11 @@ export default function Booking() {
                         {item.roomType.sizeSqm} m²
                       </p>
                       <Link className="text-link" to={`/rooms/${item.roomType.slug}`}>
-                        Room details <Arrow />
+                        Room details
+                        {item.roomType.images.length > 1
+                          ? ` · ${item.roomType.images.length} photos`
+                          : ''}{' '}
+                        <Arrow />
                       </Link>
                     </div>
                     <div className="result-price">

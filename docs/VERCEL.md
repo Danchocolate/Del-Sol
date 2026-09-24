@@ -12,6 +12,8 @@ Keep the repository's service install commands in `vercel.json`. They explicitly
 
 The API service generates Prisma Client and builds the shared workspace, then lets Vercel compile its Fastify `src/index.ts` entrypoint. Do not add the API TypeScript build to this service: emitting `dist/app.js` during Vercel's build can make Fastify detection load the library module as a CommonJS function instead of the server entrypoint.
 
+The API Function is pinned to Vercel's `syd1` region in `vercel.json`, next to this project's Sydney Supabase database. This avoids a database round trip from Washington on every API request. Vercel Hobby supports one chosen Function region; static Vite assets still use Vercel's CDN. Warm requests should be much faster, but cold starts, network conditions, and a paused Supabase Free project can still exceed 2–3 seconds. Check the Function region and response time after deployment before promising a target to guests.
+
 | Variable                  | Value                                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `NODE_ENV`                | `production`                                                                                                                    |
@@ -28,6 +30,25 @@ The API service generates Prisma Client and builds the shared workspace, then le
 | `VITE_TURNSTILE_SITE_KEY` | Public Turnstile site key for that hostname                                                                                     |
 
 Optional `STORAGE_*` variables enable image uploads; optional `SENTRY_DSN` enables error reporting. See `.env.example`. Use random secret generators, never reuse the database password. Rotate the Supabase database password previously shared in chat before putting the new URL in Vercel. URL-encode reserved characters in the password. The Transaction pooler and single-connection Prisma setting are [Supabase's recommendation for serverless functions](https://supabase.com/docs/guides/database/connecting-to-postgres). Use the Session pooler (port `5432`) or direct connection for Prisma migrations, not the Transaction pooler. The current Supabase schema was already migrated; do not run the development seed or reset it.
+
+## Enable room photo uploads with Supabase Storage
+
+The database already has a `RoomImage` table, and staff can upload multiple photos per room type from **Admin → Rooms & inventory → Photos**. The upload endpoint saves files in external object storage, so it returns `STORAGE_UNCONFIGURED` until storage is configured. No database migration is needed for this feature.
+
+1. In the same Supabase project, open **Storage → New bucket**, create a bucket such as `hotel-media`, and make it **Public**. Only approved hotel photos belong here; public buckets permit anyone with the URL to view their contents. Supabase Free includes 1 GB of file storage. The app converts valid JPEG, PNG, and WebP uploads to WebP and limits each source image to 8 MB.
+2. Open **Storage → S3 configuration**, enable the S3 connection if needed, and generate an S3 access key pair. Copy its **endpoint**, **region**, **Access Key ID**, and **Secret Access Key**. These are server-only credentials with access to storage buckets; never place them in `VITE_*` variables or chat.
+3. Set these Production variables in Vercel, then redeploy:
+
+| Variable                    | Value                                                                                     |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| `STORAGE_ENDPOINT`          | Supabase S3 endpoint, for example `https://PROJECT_REF.storage.supabase.co/storage/v1/s3` |
+| `STORAGE_REGION`            | Exact region shown in Supabase S3 configuration, for example `ap-southeast-2`             |
+| `STORAGE_BUCKET`            | Public bucket name, for example `hotel-media`                                             |
+| `STORAGE_ACCESS_KEY_ID`     | Generated S3 Access Key ID                                                                |
+| `STORAGE_SECRET_ACCESS_KEY` | Generated S3 Secret Access Key                                                            |
+| `STORAGE_PUBLIC_URL`        | `https://PROJECT_REF.supabase.co/storage/v1/object/public/hotel-media` for that bucket    |
+
+Supabase's [S3 authentication guide](https://supabase.com/docs/guides/storage/s3/authentication) gives the endpoint and region, and its [public URL guide](https://supabase.com/docs/guides/storage/serving/downloads) gives the photo URL format. The API uses path-style S3 requests as Supabase requires. Upload a real room photo, confirm it appears on the room detail page, then repeat with several photos and test the thumbnail and arrow controls on a phone.
 
 For Vercel runtime connections to Supabase's transaction pooler on port `6543`, the API adds `pgbouncer=true`, `connection_limit=1`, and `sslmode=require` when those options are missing. Keep them in `DATABASE_URL` as shown above when entering a new URL; the runtime safeguard does not change the URL used by Prisma migrations.
 

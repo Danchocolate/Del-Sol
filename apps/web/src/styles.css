@@ -641,9 +641,83 @@ a:hover {
   font-size: 10px;
   color: #b6bdaf;
 }
-.detail-image {
+.room-photo-gallery {
+  margin: 0;
+}
+.room-detail > .page-wrap:first-child {
+  min-height: 0;
+  padding-bottom: 24px;
+}
+.room-photo-stage {
+  position: relative;
+  background: #e8e4da;
+}
+.room-photo-stage > img,
+.room-photo-empty > img {
   width: 100%;
   height: 560px;
+}
+.room-photo-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 0;
+  background: #fffdf8e8;
+  color: var(--ink);
+  font-family: Georgia, serif;
+  font-size: 36px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+.room-photo-arrow.previous {
+  left: 24px;
+}
+.room-photo-arrow.next {
+  right: 24px;
+}
+.room-photo-count {
+  position: absolute;
+  right: 24px;
+  bottom: 22px;
+  background: #26332bd9;
+  color: white;
+  border-radius: 3px;
+  padding: 5px 12px;
+  font-size: 12px;
+}
+.room-photo-thumbnails {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  max-width: 1224px;
+  padding: 14px 22px 20px;
+  margin: 0 auto;
+}
+.room-photo-thumbnails button {
+  flex: 0 0 116px;
+  padding: 2px;
+  border: 2px solid transparent;
+  background: transparent;
+}
+.room-photo-thumbnails button.selected,
+.room-photo-thumbnails button:focus-visible {
+  border-color: var(--accent);
+}
+.room-photo-thumbnails img {
+  width: 100%;
+  height: 72px;
+}
+.room-photo-empty figcaption {
+  max-width: 1224px;
+  margin: 0 auto;
+  padding: 9px 22px;
+  color: var(--muted);
+  font-size: 12px;
 }
 .detail-grid {
   display: grid;
@@ -684,10 +758,6 @@ a:hover {
 .booking-aside small {
   display: block;
   margin-top: 12px;
-}
-.extra-room-image {
-  margin-top: 25px;
-  width: 100%;
 }
 .gallery-grid {
   display: grid;
@@ -1745,8 +1815,18 @@ legend {
     order: 3;
     flex-basis: 100%;
   }
-  .detail-image {
+  .room-photo-stage > img,
+  .room-photo-empty > img {
     height: 400px;
+  }
+  .room-detail > .page-wrap:first-child {
+    padding-bottom: 16px;
+  }
+  .room-photo-arrow.previous {
+    left: 12px;
+  }
+  .room-photo-arrow.next {
+    right: 12px;
   }
   .detail-grid,
   .reservation-grid,

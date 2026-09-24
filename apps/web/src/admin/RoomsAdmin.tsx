@@ -132,7 +132,7 @@ export default function RoomsAdmin() {
                           Edit
                         </button>
                         <button className="text-link" onClick={() => setMediaType(type)}>
-                          Images
+                          Photos ({type.images.length})
                         </button>
                       </div>
                     ) : null}

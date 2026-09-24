@@ -29,6 +29,9 @@
       "root": "apps/api",
       "framework": "fastify",
       "entrypoint": "src/index.ts",
+      "functions": {
+        "src/index.ts": { "regions": ["syd1"] }
+      },
       "installCommand": "cd ../.. && npm ci --include=dev",
       "buildCommand": "cd ../.. && npm run db:generate && npm run build -w @hotel/shared"
     }

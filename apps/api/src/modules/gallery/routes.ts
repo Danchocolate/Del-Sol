@@ -74,6 +74,15 @@ export async function galleryRoutes(app: FastifyInstance) {
       contentType: 'image/webp',
     });
     return inventoryTransaction(async (tx) => {
+      const lastPosition = query.roomTypeId
+        ? (
+            await tx.roomImage.aggregate({
+              where: { roomTypeId: query.roomTypeId },
+              _max: { position: true },
+            })
+          )._max.position
+        : (await tx.galleryItem.aggregate({ _max: { position: true } }))._max.position;
+      const position = (lastPosition ?? -1) + 1;
       const item = query.roomTypeId
         ? await tx.roomImage.create({
             data: {
@@ -81,6 +90,7 @@ export async function galleryRoutes(app: FastifyInstance) {
               objectKey: object.key,
               url: object.url,
               alt: query.alt,
+              position,
             },
           })
         : await tx.galleryItem.create({
@@ -89,6 +99,7 @@ export async function galleryRoutes(app: FastifyInstance) {
               url: object.url,
               alt: query.alt,
               caption: query.caption,
+              position,
             },
           });
       await audit(

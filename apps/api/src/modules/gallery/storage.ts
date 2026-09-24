@@ -19,6 +19,7 @@ export const storage: StorageProvider = {
     const client = new S3Client({
       endpoint: config.STORAGE_ENDPOINT,
       region: config.STORAGE_REGION,
+      forcePathStyle: true,
       credentials: {
         accessKeyId: config.STORAGE_ACCESS_KEY_ID,
         secretAccessKey: config.STORAGE_SECRET_ACCESS_KEY,

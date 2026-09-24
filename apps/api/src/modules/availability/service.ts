@@ -40,7 +40,10 @@ export function validateStay(input: SearchInput, settings: SystemSettings, now =
   return nights;
 }
 export const roomInclude = {
-  images: { where: { archived: false }, orderBy: { position: 'asc' as const } },
+  images: {
+    where: { archived: false },
+    orderBy: [{ position: 'asc' as const }, { id: 'asc' as const }],
+  },
   amenities: { include: { amenity: true } },
 };
 export async function findRooms(tx: Tx, input: SearchInput, roomTypeId?: string) {

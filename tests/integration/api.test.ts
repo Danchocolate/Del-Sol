@@ -369,6 +369,45 @@ describe.sequential('API security boundaries', () => {
       });
       expect(invalid.statusCode).toBe(400);
       expect(put).toHaveBeenCalledTimes(1);
+
+      const roomType = await db.roomType.findFirstOrThrow({
+        where: { name: 'API Fixture' },
+        orderBy: { createdAt: 'desc' },
+      });
+      const previous = await db.roomImage.aggregate({
+        where: { roomTypeId: roomType.id },
+        _max: { position: true },
+      });
+      const roomPhotoUrl = `/api/admin/media?roomTypeId=${roomType.id}&alt=Room%20view`;
+      const first = await app.inject({
+        method: 'POST',
+        url: roomPhotoUrl,
+        headers: {
+          origin,
+          cookie: adminCookie,
+          'content-type': 'multipart/form-data; boundary=imageboundary',
+        },
+        payload: multipart(png, 'image/png'),
+      });
+      const second = await app.inject({
+        method: 'POST',
+        url: roomPhotoUrl,
+        headers: {
+          origin,
+          cookie: adminCookie,
+          'content-type': 'multipart/form-data; boundary=imageboundary',
+        },
+        payload: multipart(png, 'image/png'),
+      });
+      expect(first.statusCode).toBe(200);
+      expect(second.statusCode).toBe(200);
+      expect(first.json().position).toBe((previous._max.position ?? -1) + 1);
+      expect(second.json().position).toBe(first.json().position + 1);
+      const publicRooms = (await app.inject({ url: '/api/public' })).json().rooms;
+      const photos = publicRooms.find((room: { id: string }) => room.id === roomType.id).images;
+      expect(
+        photos.findIndex((image: { id: string }) => image.id === first.json().id),
+      ).toBeLessThan(photos.findIndex((image: { id: string }) => image.id === second.json().id));
     } finally {
       put.mockRestore();
     }
